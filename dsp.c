@@ -15,7 +15,7 @@
 static int Open( vlc_object_t* p_this );
 static void Close( vlc_object_t* p_this );
 static block_t * DoWork( filter_t * p_filter, block_t * p_in_buf );
-static void ( *dspCallback ) ( signed short* samples, int nb_channels, int nb_samples ) = 0;
+static void ( *dspCallback ) ( float* samples, int nb_channels, int nb_samples ) = 0;
 
 
 /*****************************************************************************
@@ -37,7 +37,8 @@ static int Open( vlc_object_t* p_this )
 {
 	filter_t* p_filter = (filter_t*)p_this;
 
-	p_filter->fmt_in.audio.i_format = VLC_CODEC_S16N;
+//	p_filter->fmt_in.audio.i_format = VLC_CODEC_S16N;
+	p_filter->fmt_in.audio.i_format = VLC_CODEC_FL32;
 	p_filter->fmt_out.audio = p_filter->fmt_in.audio;
 	p_filter->pf_audio_filter = DoWork;
 
@@ -45,10 +46,11 @@ static int Open( vlc_object_t* p_this )
     if ( str_cb == NULL)
     {
         msg_Err(p_filter, "No callback specified !\n");
+        getchar();
 		return -1;
     }
-    printf("DPS Callback : %s\n", str_cb);
     sscanf(str_cb, "%p", &dspCallback);
+    printf("DSP Callback : %p\n", dspCallback);
 
 	return VLC_SUCCESS;
 }
@@ -64,9 +66,9 @@ static block_t * DoWork( filter_t * p_filter, block_t * p_in_buf )
 	uint32_t nb_channels = aout_FormatNbChannels( &p_filter->fmt_in.audio );
 	uint32_t nb_samples = p_in_buf->i_nb_samples;
 
-	if ( dspCallback )
+	if ( dspCallback != 0 )
 	{
-		dspCallback( ( short* )p_in_buf->p_buffer, nb_channels, nb_samples );
+		dspCallback( ( float* )p_in_buf->p_buffer, nb_channels, nb_samples );
 	}
 	return p_in_buf;
 }
